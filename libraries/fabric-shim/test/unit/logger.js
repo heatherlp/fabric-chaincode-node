@@ -24,20 +24,37 @@ describe('Logger', () => {
         Promise.reject('__PERMITTED__');
     });
 
+    describe('setLevel', () => {
+        it('should set the level to be as mapped', () => {
+            const myLogger = {
+                hello: 'world'
+            };
+            const myLogger2 = {
+                hello: 'world'
+            };
+
+            Logger.__set__('loggers', {
+                'myLogger': myLogger,
+                'myLogger2':myLogger2
+            });
+
+            Logger.setLevel('DEBUG');
+            expect(myLogger.level).to.equal('debug');
+            expect(myLogger2.level).to.equal('debug');
+        });
+        after(() => {
+            Logger.setLevel('INFO');
+        });
+    });
+
     describe('getLogger', () => {
 
-        let logLevel;
-        before(() => {
-            logLevel = process.env.CORE_CHAINCODE_LOGGING_LEVEL;
-        });
+        beforeEach(() => {
 
-        after(() => {
-            process.env.CORE_CHAINCODE_LOGGING_LEVEL = logLevel;
+            Logger.__set__('loggers', {});
         });
 
         it ('should create a new logger name unknown', () => {
-            process.env.CORE_CHAINCODE_LOGGING_LEVEL = null;
-
             const log = Logger.getLogger('unknown name');
 
             expect(log).to.exist;
@@ -94,6 +111,14 @@ describe('Logger', () => {
             expect(log).to.exist;
             expect(log.level).to.deep.equal('debug');
         });
+
+        it ('should set the log level to debug when env var set to INFO', () => {
+            process.env.CORE_CHAINCODE_LOGGING_LEVEL = 'INFO';
+            const log = Logger.getLogger();
+
+            expect(log).to.be.ok;
+            expect(log.level).to.deep.equal('info');
+        });
     });
 
     describe('setLevel', () => {
@@ -129,6 +154,25 @@ describe('Logger', () => {
 
             const log = Logger.getLogger('fred');
             log.debug('hello', 'fred');
+
+        });
+    });
+
+    describe('Default logging for rejected promises', () => {
+        beforeEach(() => {
+            Logger.__set__('loggers', {});
+        });
+
+        it('should setup the correct handlers', () => {
+            const myLogger = {
+                hello: 'world'
+            };
+
+            Logger.__set__('loggers', {
+                '_': myLogger
+            });
+            const firstTime = Logger.__get__('firstTime');
+            firstTime();
 
         });
     });
